@@ -1,0 +1,42 @@
+import { Storage } from "mongodb-stitch-core-sdk";
+import { AsyncStorage } from '@react-native-community/async-storage';
+
+var stitchPrefixKey = "__stitch.client";
+
+class RNCommunityAsyncStorage extends Storage {
+
+	  static RNCommunityAsyncStorage = (suiteName)=>{
+		this.suiteName = suiteName;
+		this.cachedStorage = {};
+
+        RNCommunityAsyncStorage.refreshCache = function () {
+            var _this = this;
+            return AsyncStorage.getAllKeys()
+                .then(function (keys) { return AsyncStorage.multiGet(keys); })
+                .then(function (values) {
+                _this.cachedStorage = {};
+                values.forEach(function (element) {
+                    var key = element[0];
+                    var value = element[1];
+                    _this.cachedStorage[key] = value;
+                });
+            });
+        };
+        RNCommunityAsyncStorage.get = function (key) {
+            return this.cachedStorage[this.getKey(key)];
+        };
+        RNCommunityAsyncStorage.set = function (key, value) {
+            this.cachedStorage[this.getKey(key)] = value;
+            AsyncStorage.setItem(this.getKey(key), value);
+        };
+        RNCommunityAsyncStorage.remove = function (key) {
+            delete this.cachedStorage[this.getKey(key)];
+            AsyncStorage.removeItem(this.getKey(key));
+        };
+        RNCommunityAsyncStorage.getKey = function (forKey) {
+            return stitchPrefixKey + "." + this.suiteName + "." + forKey;
+        };
+        return RNCommunityAsyncStorage;
+  	} };
+export default RNCommunityAsyncStorage;
+
